@@ -39,3 +39,36 @@ build: build
 
 logs: logs
 	${DOCKER_COMPOSE} logs -f
+
+
+
+build:
+	@$(DOCKER_COMPOSE) pull --parallel --quiet --ignore-pull-failures 2> /dev/null
+	$(DOCKER_COMPOSE) build --pull
+
+kill:
+	$(DOCKER_COMPOSE) kill
+	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+
+install: ## Install and start the project
+install: .env.local build start assets db
+
+reset: ## Stop and start a fresh install of the project
+reset: kill install
+
+start: ## Start the project
+	$(DOCKER_COMPOSE) up -d --remove-orphans --no-recreate
+
+stop: ## Stop the project
+	$(DOCKER_COMPOSE) stop
+
+clean: ## Stop the project and remove generated files
+clean: kill
+	rm -rf .env.local vendor node_modules
+
+no-docker:
+	$(eval DOCKER_COMPOSE := \#)
+	$(eval EXEC_PHP := )
+	$(eval EXEC_JS := )
+
+.PHONY: build kill install reset start stop clean no-docker
